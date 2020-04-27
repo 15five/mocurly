@@ -3,16 +3,16 @@
 Exposes the main mocurly class which is the gateway into setting up the mocurly
 context.
 """
-import recurly
-import re
-import ssl
 import functools
-from six.moves.urllib.parse import urlparse, parse_qs, unquote
-from httpretty import HTTPretty
+import re
 
-from .utils import deserialize
-from .errors import ResponseError
+import recurly
+from httpretty import HTTPretty
+from six.moves.urllib.parse import parse_qs, unquote, urlparse
+
 from .backend import clear_backends
+from .errors import ResponseError
+from .utils import deserialize
 
 
 class mocurly(object):
@@ -260,11 +260,12 @@ class _callback(object):
 
     def __call__(self, func):
         def wrapped(request, uri, headers, **kwargs):
+            error_response_body = 'The read operation timed out'
             # If we want to timeout the request, timeout, but only if we aren't
             # going to allow the POST
             if (self.mocurly_instance.should_timeout(request) and
                     not self.mocurly_instance.should_timeout_successful_post(request)):
-                raise ssl.SSLError('The read operation timed out')
+                return 502, headers, error_response_body
 
             try:
                 return_val = func(request, uri, headers, **kwargs)
@@ -275,7 +276,7 @@ class _callback(object):
                     return exc.status_code, headers, exc.response_body
 
             if self.mocurly_instance.should_timeout_successful_post(request):
-                raise ssl.SSLError('The read operation timed out')
+                return 502, headers, error_response_body
 
             return return_val
         return wrapped
