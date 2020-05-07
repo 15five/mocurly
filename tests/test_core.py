@@ -1,10 +1,11 @@
 import unittest
-import ssl
-import recurly
-recurly.API_KEY = 'blah'
 
 import mocurly
 import mocurly.backend
+import recurly
+
+recurly.API_KEY = 'blah'
+
 
 class TestCore(unittest.TestCase):
     def setUp(self):
@@ -58,7 +59,7 @@ class TestCore(unittest.TestCase):
         mocurly_.start_timeout()
 
         self.assertFalse(mocurly.backend.accounts_backend.has_object(self.base_account_data['account_code']))
-        self.assertRaises(ssl.SSLError, recurly.Account(**self.base_account_data).save)
+        self.assertRaises(recurly.errors.BadGatewayError, recurly.Account(**self.base_account_data).save)
         self.assertFalse(mocurly.backend.accounts_backend.has_object(self.base_account_data['account_code']))
 
         mocurly_.stop_timeout()
@@ -76,7 +77,7 @@ class TestCore(unittest.TestCase):
         mocurly_.start_timeout_successful_post()
 
         self.assertFalse(mocurly.backend.accounts_backend.has_object(self.base_account_data['account_code']))
-        self.assertRaises(ssl.SSLError, recurly.Account(**self.base_account_data).save)
+        self.assertRaises(recurly.errors.BadGatewayError, recurly.Account(**self.base_account_data).save)
         self.assertTrue(mocurly.backend.accounts_backend.has_object(self.base_account_data['account_code']))
 
         mocurly_.stop_timeout_successful_post()
@@ -101,7 +102,7 @@ class TestCore(unittest.TestCase):
         self.assertFalse(mocurly.backend.accounts_backend.has_object(self.base_account_data['account_code']))
         recurly.Account(**self.base_account_data).save()
         self.assertTrue(mocurly.backend.accounts_backend.has_object(self.base_account_data['account_code']))
-        self.assertRaises(ssl.SSLError, recurly.Account.get, self.base_account_data['account_code'])
+        self.assertRaises(recurly.errors.BadGatewayError, recurly.Account.get, self.base_account_data['account_code'])
 
         mocurly_.stop_timeout()
 
@@ -126,7 +127,7 @@ class TestCore(unittest.TestCase):
 
         self.assertEqual(len(mocurly.backend.transactions_backend.datastore), 0)
         new_transaction = recurly.Transaction(account=new_account, amount_in_cents=20, currency='USD')
-        self.assertRaises(ssl.SSLError, new_transaction.save)
+        self.assertRaises(recurly.errors.BadGatewayError, new_transaction.save)
         self.assertEqual(len(mocurly.backend.transactions_backend.datastore), 1)
 
         mocurly_.stop_timeout_successful_post()
